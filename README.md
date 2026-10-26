@@ -29,7 +29,7 @@ ThingSpeak displays the collected data in two real-time charts.
 https://wokwi.com/projects/478860324247301121
 
 ## ThingSpeak Channel
-- **Channel Name:** Rawnaq-marae-12401585
+- **Channel Name:** Rawnaq_marae_12401585
 - **Channel ID:** 3549803
 - **Public URL:** https://thingspeak.com/channels/3549803
 
