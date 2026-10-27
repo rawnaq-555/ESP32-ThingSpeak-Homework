@@ -1,76 +1,72 @@
 
 #include <WiFi.h>
-#include <HTTPClient.h>
+#include "ThingSpeak.h"
 #include <DHT.h>
 #include "secrets.h"
 
+// WiFi
+const char* WIFI_Name = "Wokwi-GUEST";
+const char* WIFI_Pass = "";
+
+// ThingSpeak
+const unsigned long channelNumber = 3549803;
+const char* apiKey = "2IY74TPCJ387P0TN";
+WiFiClient clientObject;
+
+// DHT22 Sensor
 #define DHTPIN 15
 #define DHTTYPE DHT22
 
-DHT dht(DHTPIN, DHTTYPE);
-
-const char* ssid = "Wokwi-GUEST";
-const char* password = "";
-
-const char* universityID = "12401585";
+DHT sensorDHT(DHTPIN, DHTTYPE);
 
 void setup() {
+
   Serial.begin(115200);
-  dht.begin();
+  sensorDHT.begin();
 
-  WiFi.begin(ssid, password, 6);
-
-  Serial.print("Connecting to WiFi");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_Name, WIFI_Pass);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+    Serial.println("Status: Not Connected");
+    delay(1000);
   }
 
-  Serial.println("\nWiFi Connected!");
+  Serial.println("Status: Connected");
+  Serial.println("University ID: 12401585");
+
+  ThingSpeak.begin(clientObject);
 }
 
 void loop() {
-  float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();
+
+  float temperature = sensorDHT.readTemperature();
+  float humidity = sensorDHT.readHumidity();
 
   if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Failed to read DHT22!");
+    Serial.println("Sensor Reading Failed");
+    delay(2000);
+    return;
+  }
+
+  Serial.print("Temperature: ");
+  Serial.println(temperature);
+
+  Serial.print("Humidity: ");
+  Serial.println(humidity);
+
+  // Send readings to ThingSpeak
+  ThingSpeak.setField(1, temperature);
+  ThingSpeak.setField(2, humidity);
+
+
+  int stat = ThingSpeak.writeFields(channelNumber, apiKey);
+
+  if (stat == 200) {
+    Serial.println("Data Sent to ThingSpeak");
   } else {
-    Serial.print("University ID: ");
-    Serial.println(universityID);
-
-    Serial.print("Temperature: ");
-    Serial.println(temperature);
-
-    Serial.print("Humidity: ");
-    Serial.println(humidity);
-
-    if (WiFi.status() == WL_CONNECTED) {
-      HTTPClient http;
-
-      String url =
-        "http://api.thingspeak.com/update?api_key=" +
-        String(THINGSPEAK_API_KEY) +
-        "&field1=" + String(temperature, 2) +
-        "&field2=" + String(humidity, 2);
-
-      http.begin(url);
-
-      int httpCode = http.GET();
-
-      if (httpCode > 0) {
-        String response = http.getString();
-
-        Serial.print("ThingSpeak response: ");
-        Serial.println(response);
-      } else {
-        Serial.print("HTTP error: ");
-        Serial.println(httpCode);
-      }
-
-      http.end();
-    }
+    Serial.print("ThingSpeak Error: ");
+    Serial.println(stat);
   }
 
   delay(20000);
