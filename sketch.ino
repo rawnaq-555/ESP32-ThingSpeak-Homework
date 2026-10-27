@@ -2,15 +2,15 @@
 #include <WiFi.h>
 #include "ThingSpeak.h"
 #include <DHT.h>
-#include "secrets.h"
 
-// WiFi
+// WiFi Settings
 const char* WIFI_Name = "Wokwi-GUEST";
 const char* WIFI_Pass = "";
 
-// ThingSpeak
+// ThingSpeak Settings
 const unsigned long channelNumber = 3549803;
 const char* apiKey = "2IY74TPCJ387P0TN";
+
 WiFiClient clientObject;
 
 // DHT22 Sensor
@@ -37,7 +37,7 @@ void setup() {
 
   ThingSpeak.begin(clientObject);
 }
-
+  
 void loop() {
 
   float temperature = sensorDHT.readTemperature();
@@ -55,10 +55,9 @@ void loop() {
   Serial.print("Humidity: ");
   Serial.println(humidity);
 
-  // Send readings to ThingSpeak
+  // Send data to ThingSpeak
   ThingSpeak.setField(1, temperature);
   ThingSpeak.setField(2, humidity);
-
 
   int stat = ThingSpeak.writeFields(channelNumber, apiKey);
 
